@@ -1,0 +1,5 @@
+{
+    "python.analysis.extraPaths": [
+        "./selfish_mining"
+    ]
+}
