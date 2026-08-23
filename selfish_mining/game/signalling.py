@@ -1,4 +1,6 @@
+import numpy as np
 class ThesisSignalEngine:
+
     """
     Implements utility functions U_S and U_R for Sender and Receiver
     using the exact formulas from Section 4.2.4.[cite: 1]
@@ -31,7 +33,8 @@ class ThesisSignalEngine:
         c : float,
         kappa : float,
         gamma : float,
-        R_net : float
+        R_net : float,
+        rng = None
     )->tuple[float , float]:
 
     # """
@@ -63,10 +66,22 @@ class ThesisSignalEngine:
            u_sender = R + alpha - total_signalling_cost
            u_receiver = 0.0
         else: #if action == Ignore
-            u_sender = (gamma * (R + alpha - total_signalling_cost)) + \
-                           ((1.0 - gamma) * (-total_signalling_cost - c))
-            u_receiver = R_net
+            # Resolve the fork race stochastically, per round, rather than
+            # using the closed-form expected value directly. This is what
+            # makes the simulation a genuine dynamic test of the theoretical
+            # formula, rather than a re-statement of it.
+            # u_sender = (gamma * (R + alpha - total_signalling_cost)) + \
+            #                ((1.0 - gamma) * (-total_signalling_cost - c))
+            # u_receiver = R_net
+            rng = np.random.default_rng()
+            branch_wins = rng.random() < gamma
 
+            if branch_wins:
+                u_sender = R + alpha - total_signalling_cost
+            else:
+                u_sender = -total_signalling_cost - c
+            
+            u_receiver = R_net
      return u_sender, u_receiver
 
     @staticmethod

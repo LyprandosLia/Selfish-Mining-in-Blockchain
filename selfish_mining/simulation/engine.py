@@ -9,6 +9,7 @@ class ThesisSimulationEngine:
         self.chain = Blockchain()
         self.sender = SenderPool(config.Q, config.ALPHA, config.KAPPA, config.EPSILON)
         self.receiver = NetworkReceiver(config.R_NET, config.RECEIVER_THRESHOLD)
+        self.rng = np.random.default_rng(config.RANDOM_SEED) 
 
     def run_simulation(self, num_rounds : int = config.ROUNDS)->dict:
         history = {
@@ -20,7 +21,8 @@ class ThesisSimulationEngine:
             'u_sender' : [],
             'u_receiver' : [],
             'private_lead' : [],
-            'relative_revenue' : []
+            'relative_revenue' : [],
+            'selfish_ignore_payoffs': [], 
         }
 
         for i in range(1, num_rounds + 1):
@@ -41,7 +43,8 @@ class ThesisSimulationEngine:
             u_s , u_r = ThesisSignalEngine.calculate_payoffs(
                 sender_type , tau, action,
                 config.R, config.ALPHA, config.C, config.KAPPA,
-                config.GAMMA, config.R_NET
+                config.GAMMA, config.R_NET,
+                rng = self.rng
             )
 
             history['round'].append(i)
@@ -54,4 +57,16 @@ class ThesisSimulationEngine:
             history['private_lead'].append(self.chain.private_lead)
 
         history['relative_revenue'] = self.chain.calculate_relative_revenue()
+
+        if sender_type == 'theta_S' and action == 'Ignore':
+                history['selfish_ignore_payoffs'].append(u_s)
+
+        history['relative_revenue'] = self.chain.calculate_relative_revenue()
+
+        #compute the running mean, once, after the loop ends ---
+        if history['selfish_ignore_payoffs']:
+            payoffs = np.array(history['selfish_ignore_payoffs'])
+            history['selfish_ignore_running_mean'] = np.cumsum(payoffs) / np.arange(1, len(payoffs) + 1)
+        else:
+            history['selfish_ignore_running_mean'] = np.array([])
         return history
