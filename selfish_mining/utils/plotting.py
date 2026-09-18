@@ -24,8 +24,8 @@ def plot_simulation_metrics(history : dict, save_prefix : str = 'thesis_fig'):
 
 def plot_equilibrium_boundary(R=10.0, c=2.0, kappa=0.5, save_path="thesis_fig_equilibrium.png"):
     # 2. Analytical Separating Equilibrium Contour Map (Section 4.3.2)
-    alphas = np.linspace(1.0, 8.0, 50)
-    gammas = np.linspace(0.0, 1.0, 50)
+    alphas = np.linspace(1.0, 8.0, 500)
+    gammas = np.linspace(0.0, 1.0, 500)
     A, G = np.meshgrid(alphas, gammas)
     
     tau_star = A / kappa

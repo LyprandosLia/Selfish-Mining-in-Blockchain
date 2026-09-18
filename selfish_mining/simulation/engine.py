@@ -7,22 +7,22 @@ from models.chain import Blockchain
 class ThesisSimulationEngine:
     def __init__(self):
         self.chain = Blockchain()
-        self.sender = SenderPool(config.Q, config.ALPHA, config.KAPPA, config.EPSILON)
+        self.rng = np.random.default_rng(config.RANDOM_SEED)
+        self.sender = SenderPool(config.Q, config.ALPHA, config.KAPPA, config.EPSILON, self.rng)
         self.receiver = NetworkReceiver(config.R_NET, config.RECEIVER_THRESHOLD)
-        self.rng = np.random.default_rng(config.RANDOM_SEED) 
 
-    def run_simulation(self, num_rounds : int = config.ROUNDS)->dict:
+    def run_simulation(self, num_rounds: int = config.ROUNDS) -> dict:
         history = {
-            'round' : [],
-            'sender_type' : [],
-            'tau' : [],
-            'posterior_selfish' : [],
-            'action' : [] ,
-            'u_sender' : [],
-            'u_receiver' : [],
-            'private_lead' : [],
-            'relative_revenue' : [],
-            'selfish_ignore_payoffs': [], 
+            'round': [],
+            'sender_type': [],
+            'tau': [],
+            'posterior_selfish': [],
+            'action': [],
+            'u_sender': [],
+            'u_receiver': [],
+            'private_lead': [],
+            'relative_revenue': [],
+            'selfish_ignore_payoffs': [],
         }
 
         for i in range(1, num_rounds + 1):
@@ -30,21 +30,21 @@ class ThesisSimulationEngine:
             tau = self.sender.emit_signal(sender_type)
             is_private = (sender_type == 'theta_S')
 
-            #Step 1 : Add the block to the chain
-            self.chain.add_block(miner_type=sender_type, delay_tau = tau, is_private= is_private)
+            # Step 1: Add the block to the chain
+            self.chain.add_block(miner_type=sender_type, delay_tau=tau, is_private=is_private)
 
-            #Step 2 : Receiver evaluates signal delay and chooses action
+            # Step 2: Receiver evaluates signal delay and chooses action
             action, p_selfish = self.receiver.evaluate_and_decide(tau, config.EPSILON, config.Q)
 
-            #Step 3 : Resolve chain fork
+            # Step 3: Resolve chain fork
             self.chain.resolve_fork(receiver_action=action)
 
-            #Step 4 : Calculate payoffs
-            u_s , u_r = ThesisSignalEngine.calculate_payoffs(
-                sender_type , tau, action,
+            # Step 4: Calculate payoffs
+            u_s, u_r = ThesisSignalEngine.calculate_payoffs(
+                sender_type, tau, action,
                 config.R, config.ALPHA, config.C, config.KAPPA,
                 config.GAMMA, config.R_NET,
-                rng = self.rng
+                rng=self.rng
             )
 
             history['round'].append(i)
@@ -56,17 +56,17 @@ class ThesisSimulationEngine:
             history['u_receiver'].append(u_r)
             history['private_lead'].append(self.chain.private_lead)
 
-        history['relative_revenue'] = self.chain.calculate_relative_revenue()
-
-        if sender_type == 'theta_S' and action == 'Ignore':
+            if sender_type == 'theta_S' and action == 'Ignore':
                 history['selfish_ignore_payoffs'].append(u_s)
 
+       
+
         history['relative_revenue'] = self.chain.calculate_relative_revenue()
 
-        #compute the running mean, once, after the loop ends ---
         if history['selfish_ignore_payoffs']:
             payoffs = np.array(history['selfish_ignore_payoffs'])
             history['selfish_ignore_running_mean'] = np.cumsum(payoffs) / np.arange(1, len(payoffs) + 1)
         else:
             history['selfish_ignore_running_mean'] = np.array([])
+
         return history

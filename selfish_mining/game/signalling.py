@@ -54,6 +54,10 @@ class ThesisSignalEngine:
     
      total_signalling_cost = kappa * tau
 
+     if rng is None:
+        rng = np.random.default_rng()
+
+
      if sender_type == 'theta_H':
         if action == "Follow":
            u_sender  = R
@@ -73,7 +77,9 @@ class ThesisSignalEngine:
             # u_sender = (gamma * (R + alpha - total_signalling_cost)) + \
             #                ((1.0 - gamma) * (-total_signalling_cost - c))
             # u_receiver = R_net
-            rng = np.random.default_rng()
+            # rng = np.random.default_rng()
+            # branch_wins = rng.random() < gamma
+
             branch_wins = rng.random() < gamma
 
             if branch_wins:
@@ -87,10 +93,12 @@ class ThesisSignalEngine:
     @staticmethod
     def optimal_withholding_threshold(alpha : float, kappa : float)->float:
        """
-        Calculates tau* = alpha / kappa, the optimal withholding upper limit
+        Returns  tau* = alpha / kappa, the optimal withholding upper limit
         where strategic premium equals total signaling cost (Section 4.2.4).[cite: 1]
         """
-       return alpha/kappa
+       import config
+       
+       return config.TAU_W
        
 
 

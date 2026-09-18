@@ -2,15 +2,16 @@ import numpy as np
 from game.signalling import ThesisSignalEngine
 
 class SenderPool:
-    def __init__(self, q: float, alpha: float, kappa: float, epsilon: float):
+    def __init__(self, q: float, alpha: float, kappa: float, epsilon: float, rng: np.random.Generator):
         self.q = q
         self.alpha = alpha
         self.kappa = kappa
         self.epsilon = epsilon
+        self.rng = rng
 
     def sample_type(self) -> str:
         """Nature selects player type theta_H with prob q or theta_S with prob 1-q."""
-        return 'theta_H' if np.random.rand() < self.q else 'theta_S'
+        return 'theta_H' if self.rng.random() < self.q else 'theta_S'
 
     def emit_signal(self, sender_type :str):
         """
@@ -21,8 +22,8 @@ class SenderPool:
         tau_star = ThesisSignalEngine.optimal_withholding_threshold(self.alpha, self.kappa)
 
         if sender_type == 'theta_H':
-            if np.random.rand() < self.epsilon:
-                return np.random.uniform(0.01, tau_star)
+            if self.rng.random() < self.epsilon:
+                return self.rng.uniform(0.01, tau_star)
             return 0.0
         else:
             return tau_star

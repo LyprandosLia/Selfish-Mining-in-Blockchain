@@ -82,6 +82,7 @@ class Blockchain:
             # Community ignores private branch
              if self.public_height >= self.private_height:
                 self.private_head_id = self.public_head_id
+        
 
 
     def get_main_chain(self)->List[Block]:
